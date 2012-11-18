@@ -1,11 +1,11 @@
 <center>School of Computer Science</center>
 <center>University of Guelph</center>
 
-<center>#CIS*6650 Automatic Speech Recognition</center>
+#<center>CIS*6650 Automatic Speech Recognition</center>
 <center>Fall 2012</center>
 <center>Instructor: Fangju Wang</center>
 
-<center>##Assignment 3 (20%)</center>
+##<center>Assignment 3 (20%)</center>
 
 In this assignment, you are required to develop a spoken dialogue system (SDS) using Sphinx-4 as its speech recognizer.
 
@@ -27,6 +27,6 @@ Requirements:
 
 * Demo your system to the instructor.
 
-##Due time: 24:00pm, Dec 3, 2012, (Monday)
+###Due time: 24:00pm, Dec 3, 2012, (Monday)
 
-##Demo time: Dec 4 and 5, 2012, (Tuesday and Wednesday)
+###Demo time: Dec 4 and 5, 2012, (Tuesday and Wednesday)
