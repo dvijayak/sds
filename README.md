@@ -1,4 +1,5 @@
 <center>School of Computer Science</center>
+<br>
 <center>University of Guelph</center>
 
 #<center>CIS*6650 Automatic Speech Recognition</center>
