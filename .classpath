@@ -1,6 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="sphinx4-main"/>
+	<classpathentry kind="src" path="sphinx4-apps"/>
+	<classpathentry kind="src" path="sphinx4-jsapi"/>
+	<classpathentry kind="src" path="sphinx4-test"/>
+	<classpathentry kind="src" path="sphinx4-research"/>
+	<classpathentry kind="src" path="sphinx4-scripts"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/js.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/jsapi.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/tags.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/ant-contrib-0.6.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/batch.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/fst.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/jsapi-1.0-base.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/junit-4.8.1.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/sphinx4.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/TIDIGITS_8gau_13dCep_16k_40mel_130Hz_6800Hz.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/WSJ_8gau_13dCep_8kHz_31mel_200Hz_3500Hz.jar"/>
+	<classpathentry kind="lib" path="/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/lib/WSJ_8gau_13dCep_16k_40mel_130Hz_6800Hz.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

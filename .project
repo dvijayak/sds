@@ -14,4 +14,41 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>build.xml</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/Libraries/sphinx4/build.xml</locationURI>
+		</link>
+		<link>
+			<name>sphinx4-apps</name>
+			<type>2</type>
+			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/apps</location>
+		</link>
+		<link>
+			<name>sphinx4-jsapi</name>
+			<type>2</type>
+			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/jsapi</location>
+		</link>
+		<link>
+			<name>sphinx4-main</name>
+			<type>2</type>
+			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/sphinx4</location>
+		</link>
+		<link>
+			<name>sphinx4-research</name>
+			<type>2</type>
+			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/research</location>
+		</link>
+		<link>
+			<name>sphinx4-scripts</name>
+			<type>2</type>
+			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/scripts</location>
+		</link>
+		<link>
+			<name>sphinx4-test</name>
+			<type>2</type>
+			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/test</location>
+		</link>
+	</linkedResources>
 </projectDescription>
