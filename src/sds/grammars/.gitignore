@@ -1,2 +1,2 @@
-*.gram
+*
 !(gameboard.gram)

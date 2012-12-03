@@ -50,7 +50,33 @@
 						"points" : 60
 					} ,	
 				]											
-			}		
-		]	
+			} ,	
+			{				
+				"name" : "Canada" ,
+				"questions" : [				
+					{					
+						"question" : "St. John's is the capital of which province in Canada?",
+						"answer" : "Newfoundland",
+						"points" : 10
+					} ,	
+										{					
+						"question" : "What is the largest of the North American Great Lakes?",
+						"answer" : "Lake Superior",
+						"points" : 20
+					} ,	
+										{					
+						"question" : "What is the largest lake that is entirely within Canada?",
+						"answer" : "Great Bear Lake",
+						"points" : 35
+					} ,	
+										{					
+						"question" : "The Yukon Territory is the only province or territory in Canada that borders on Alaska.",
+						"answer" : "False",
+						"points" : 60
+					} ,	
+				]											
+			}				
+		]
+	
 	}	
 }

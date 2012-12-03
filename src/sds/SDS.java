@@ -86,8 +86,7 @@ public class SDS {
         Microphone microphone = (Microphone) cm.lookup("microphone");
         if (!microphone.startRecording()) {
             System.out.println("Cannot start microphone.");
-            sds.recognizer.deallocate();
-            System.exit(1);
+            sds.exitApplication(1);
         }
 
         System.out.println("Welcome to Sphinx4 Jeopardy!");
@@ -100,6 +99,12 @@ public class SDS {
         int nCategories = categories.length;
                 
         while (true) {
+        	if (sds.bank.isEmpty()) {
+        		System.out.println("Game Over! New Game?");
+        		System.out.println("======================");
+        		sds.showInstructions();
+        	}
+        	
             // Start speaking and recognize input speech
         	sds.loadGrammar("gameboard");        	
             Result result = sds.recognizer.recognize();
@@ -111,17 +116,20 @@ public class SDS {
                     // If user says Quit (or Bye), exit game
                     if (resultText.equalsIgnoreCase("quit")) {
                     	System.out.println("Bye now!");                	
-                    	sds.recognizer.deallocate();
-                    	System.exit(1);
+                    	sds.exitApplication(1);
                     }                          
                     else if (resultText.equalsIgnoreCase("new game")) {
-                        System.out.println("You said: " + resultText + '\n');
+//                        System.out.println("You said: " + resultText + '\n');
+                    	sds.startNewGame();
                     }
                     else if (resultText.equalsIgnoreCase("help"))
                     	sds.showInstructions();
-                    else {
+                    else {                    	
                         // Parse the result text into meaningful tokens
                     	try {
+        				    // Switch to the question bank grammar
+        				    sds.loadGrammar("questionbank");
+                    		
 	                        String[] tokens = resultText.split(" ");
 	                        String category = tokens[0], points = tokens[1];
 	                         
@@ -135,10 +143,7 @@ public class SDS {
 	    	            		    int nQuestions = questions.length;
 	    	            		    for (int q = 0; q < nQuestions; q++) {
 	    	            			    if (questions[q].points == sds.pointsMap.get(points)) { // convert number full name to number value
-	    	            				    System.out.println("You picked " + category + " for " + sds.pointsMap.get(points) + " points...\n");
-	    	            				    
-	    	            				    // Switch to the grammar of the question
-	    	            				    sds.loadGrammar(category.toLowerCase() + "-" + "question" + (q + 1)); // filenames start from 1; not 0
+	    	            				    System.out.println("You picked " + category + " for " + sds.pointsMap.get(points) + " points...\n");	    	            				   
 	    	            				    
 	    	            				    // Display the question and retrieve/process the response
 	    	            				    System.out.println("Question: " + questions[q].question);
@@ -156,31 +161,58 @@ public class SDS {
 	    	            				    	}
 	    	            				    	// Remove the question from the bank so the player can not try it again
 	    	            				    	sds.bank.get(category).remove(q);
-	    	            				    	// Recreate the grammar file structure according to the modified question bank
-	    	            				    	sds.removeQuestionGrammarFiles();
-	    	            				    	sds.createQuestionGrammarFiles();
-	    	            				    } else {
-	    	            		                System.out.println("I can't hear what you said.\n");
-	    	            		            }
-	    	            				    
+	    	            				    	if (sds.bank.get(category).isEmpty())
+	    	            				    		sds.bank.remove(category);
+	    	            				    } else 
+	    	            		                System.out.println("I can't hear what you said.\n");	    	            		            	    	            				    
 	    	            				    break;
 	    	            			    }	    	            			   
 	    	            		    }
 	    	            		   
 	    	            	    }
 	    	                }
+                    	} catch (NullPointerException e) {
+                    		System.out.println("You can not choose that option again!\n");
                     	} catch (Exception e) {
                     		e.printStackTrace();
+                    		sds.exitApplication(-1);
                     	}
                     	sds.drawGameBoard();
                     }
-                }                                   
-            } else {
+                }
+                else
+                	System.out.println("I can't hear what you said.\n");
+            } else 
                 System.out.println("I can't hear what you said.\n");
-            }
+            
            
         }
     }   
+    
+    /**
+     * Helper function for safely exiting the application under any circumstance
+     * 
+     * @param status
+     * 
+     * @author dvijayak
+     */    
+    private void exitApplication (int status) {
+    	recognizer.deallocate();
+    	removeGrammarFiles();
+    	System.exit(status);
+    }
+    
+    /**
+     * Start a new game; reset score board; recreate question bank
+     * 
+     * @author dvijayak
+     */
+    private void startNewGame () {
+    	System.out.println("======================");
+    	System.out.println("Starting a new game...");
+    	System.out.println("======================\n");
+    	loadGameBoard();
+    }
     
     /**
      * Load the grammar with the given grammar name. A previously loaded
@@ -188,6 +220,8 @@ public class SDS {
      * 
      * @throws IOException if an I/O error occurs
      * @throws GrammarException if a grammar format error is detected
+     * 
+     * @author dvijayak
      */
     private void loadGrammar(String grammarName) throws GrammarException {
         try {
@@ -221,9 +255,9 @@ public class SDS {
         output.append("=========\n");
         String[] categories = bank.keySet().toArray(new String[bank.size()]);
         int nCategories = categories.length;
-        for (int c = 0; c < nCategories; c++) {
+        for (int c = 0; c < nCategories; c++) {        	
         	output.append("Category: " + categories[c] + "\n");        	
-        	output.append("Points:   ");
+        	output.append("Points:   ");        
         	Question[] questions = bank.get(categories[c]).toArray(new Question[bank.get(categories[c]).size()]);        
             int nQuestions = questions.length;
             for (int q = 0; q < nQuestions; q++) {
@@ -231,7 +265,7 @@ public class SDS {
             	if (q != nQuestions - 1)
             		output.append(", ");
             }
-            output.append("\n\n");            
+            output.append("\n\n");
         }                      
         output.append("Score: " + score + "\n");
         output.append("=========\n");
@@ -247,7 +281,7 @@ public class SDS {
     	System.out.println("Loading gameboard...");
     	try {    		 
 //    		// Clear all grammar files from previous session
-//    		removeQuestionGrammarFiles();
+//    		removeGrammarFiles();
     		
     		// Initialize the score(s)
     		this.score = 0;
@@ -272,7 +306,9 @@ public class SDS {
 				
 				// Get all categories
 				JSONArray categories = bank.getJSONArray("categories");				
-				int nCategories = categories.length();			
+				int nCategories = categories.length();
+				List<String> answers = new ArrayList<String>(); // List of question bank answers
+				int nAnswers = 0;
 				for (int c = 0; c < nCategories; c++) {
 					JSONObject category = categories.getJSONObject(c);
 					String name = category.getString("name");
@@ -280,18 +316,18 @@ public class SDS {
 					// Get all questions within this category
 					List<Question> questionsList = new ArrayList<Question>();					
 					JSONArray questions = category.getJSONArray("questions");					
-					int nQuestions = questions.length();				
-					for (int q = 0; q < nQuestions; q++) {
+					int nQuestions = questions.length();					
+					for (int q = 0; q < nQuestions; q++, nAnswers++) {
 						JSONObject question = questions.getJSONObject(q);
 						String answer = question.getString("answer");
-						questionsList.add(new Question(question.getString("question"), question.getString("answer"), question.getInt("points")));
-						
-						// Create question bank grammar file
-						createQuestionGrammarFile(name + "-" + "Question" + (q + 1), answer);
+						answers.add(answer);
+						questionsList.add(new Question(question.getString("question"), answer, question.getInt("points")));						
 					}
 					// Put the category into the game question bank
 					this.bank.put(name, questionsList);
-				}								
+				}
+				// Create the question bank grammar file
+				createGrammarFile("Question Bank", answers.toArray(new String[nAnswers]));
 				
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -299,6 +335,7 @@ public class SDS {
 			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -307,24 +344,31 @@ public class SDS {
     }        
        
     /**
-     * Create a grammar file for the question (whose answer is provided)
-     * using the provided filename.
+     * Create a grammar file for the supplied question bank
      * 
      * @param grammarName
-     * @param answer
+     * @param answers
      * 
      * @author dvijayak
      */
-    private void createQuestionGrammarFile (String grammarName, String answer) {    	
+    private void createGrammarFile (String grammarName, String[] answers) {    	
 		StringBuilder output = new StringBuilder();
 		// Header
-		output.append("#JSGF V1.0;\n\n/**\n * JSGF Grammar for Jeopardy: " + grammarName.replace("-", "/") + "\n */\n\n");
-		output.append("grammar " + grammarName.toLowerCase().replace(" ", "") + ";\n\n");
+		output.append("#JSGF V1.0;\n\n/**\n * JSGF Grammar for Jeopardy: " + grammarName + "\n */\n\n");
+		grammarName = grammarName.toLowerCase().replace(" ", "");
+		output.append("grammar " + grammarName+ ";\n\n");
 		// Body
-		output.append("public <answer> = " + answer + " {ANSWER};");
+		output.append("public <answer> = ");
+		for (int a = 0; a < answers.length; a++) {
+			output.append(answers[a]);
+			if (a != answers.length - 1)
+				output.append(" | ");
+				
+		}			
+		output.append(";");
 			
 		try {
-			BufferedWriter bw = new BufferedWriter(new FileWriter(new File("src/sds/grammars/" + grammarName.toLowerCase() + ".gram")));
+			BufferedWriter bw = new BufferedWriter(new FileWriter(new File("src/sds/grammars/" + grammarName + ".gram")));
 			bw.write(output.toString());
 			bw.flush();
 			bw.close();
@@ -337,9 +381,11 @@ public class SDS {
      * [Re]Create a list of grammar files that are currently
      * in the question bank
      * 
+     * TODO: This only works when creating per category; not the whole bank
+     * 
      * @author dvijayak
      */
-    private void createQuestionGrammarFiles () {
+    private void createGrammarFiles () {
 		// Get all categories
     	String[] categories = bank.keySet().toArray(new String[bank.size()]);				
 		int nCategories = categories.length;			
@@ -347,10 +393,13 @@ public class SDS {
 	 	    // Get all questions for each category
 		    Question[] questions = bank.get(categories[c]).toArray(new Question[bank.get(categories[c]).size()]);                		   		 
 		    int nQuestions = questions.length;
+		    // Store answers in an array
+		    String[] answers = new String[nQuestions];
 		    for (int q = 0; q < nQuestions; q++) {
-		    	createQuestionGrammarFile(categories[c] + "-" + "Question" + (q + 1), questions[q].answer);
+		    	answers[q] = questions[q].answer;
 		    }
-    		       	    
+		    // Create a grammar file for each category using the answers array
+		    createGrammarFile(categories[c], answers);
         }
     }    
     
@@ -359,7 +408,7 @@ public class SDS {
      * 
      * @author dvijayak
      */
-    private void removeQuestionGrammarFiles () {
+    private void removeGrammarFiles () {
     	File folder = new File("src/sds/grammars/");
     	File[] files = folder.listFiles();
     	if (files != null) { // some JVMs return null for empty directories
