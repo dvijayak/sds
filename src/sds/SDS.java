@@ -137,6 +137,17 @@ public class SDS {
 	    	            				    System.out.println("You picked " + category + " for " + sds.pointsMap.get(points) + " points...\n");              
 	    	            				    // Switch to the grammar of the question
 	    	            				    sds.loadGrammar(category.toLowerCase() + "-" + "question" + q);
+	    	            				    
+	    	            				    System.out.println("Question: " + questions[q].question + "\n");
+	    	            				    Result answer = sds.recognizer.recognize();
+	    	            				    if (answer != null) {
+	    	            				    	String answerText = answer.getBestResultNoFiller();
+	    	            				    	System.out.println("You answered: " + answerText + "\n.........");	    	            				    	
+	    	            				    	if (answerText.equalsIgnoreCase(questions[q].answer))
+	    	            				    		System.out.println("Correct!");
+	    	            				    } else {
+	    	            		                System.out.println("I can't hear what you said.\n");
+	    	            		            }	    	            				    
 	    	            			    }                			   
 	    	            			   
 	    	            		    }
@@ -149,7 +160,9 @@ public class SDS {
                     		e.printStackTrace();
                     	}
                     }
-                }               
+                }   
+                
+                sds.drawGameBoard();
             } else {
                 System.out.println("I can't hear what you said.\n");
             }

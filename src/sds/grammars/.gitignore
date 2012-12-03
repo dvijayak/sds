@@ -1,0 +1,2 @@
+*.gram
+!(gameboard.gram)
