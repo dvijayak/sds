@@ -1,0 +1,8 @@
+new
+game
+quit
+
+ten
+twenty
+thirty-five
+sixty

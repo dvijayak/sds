@@ -1,0 +1,9 @@
+#JSGF V1.0;
+
+/**
+ * JSGF Grammar for Spoken Word Dialogue system
+ */
+
+grammar sds;
+
+public <greet> = ( Good morning | Hello | Salute | Quit {exit} ) [ ( Bhiksha | Evandro | Paul | Philip | Rita | Will | Guelph | 39 | 404 ) ];

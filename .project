@@ -16,6 +16,11 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>JSON-java</name>
+			<type>2</type>
+			<location>/media/ddrive/Development/Libraries/JSON-java</location>
+		</link>
+		<link>
 			<name>build.xml</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/Libraries/sphinx4/build.xml</locationURI>
@@ -23,32 +28,32 @@
 		<link>
 			<name>sphinx4-apps</name>
 			<type>2</type>
-			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/apps</location>
+			<location>/media/ddrive/Development/Libraries/sphinx4/src/apps</location>
 		</link>
 		<link>
 			<name>sphinx4-jsapi</name>
 			<type>2</type>
-			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/jsapi</location>
+			<location>/media/ddrive/Development/Libraries/sphinx4/src/jsapi</location>
 		</link>
 		<link>
 			<name>sphinx4-main</name>
 			<type>2</type>
-			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/sphinx4</location>
+			<location>/media/ddrive/Development/Libraries/sphinx4/src/sphinx4</location>
 		</link>
 		<link>
 			<name>sphinx4-research</name>
 			<type>2</type>
-			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/research</location>
+			<location>/media/ddrive/Development/Libraries/sphinx4/src/research</location>
 		</link>
 		<link>
 			<name>sphinx4-scripts</name>
 			<type>2</type>
-			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/scripts</location>
+			<location>/media/ddrive/Development/Libraries/sphinx4/src/scripts</location>
 		</link>
 		<link>
 			<name>sphinx4-test</name>
 			<type>2</type>
-			<location>/media/925C59EE5C59CE1B/Development/Libraries/sphinx4/src/test</location>
+			<location>/media/ddrive/Development/Libraries/sphinx4/src/test</location>
 		</link>
 	</linkedResources>
 </projectDescription>
