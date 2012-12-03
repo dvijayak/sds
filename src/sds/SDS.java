@@ -13,15 +13,19 @@
 package sds;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.speech.recognition.GrammarException;
+import javax.speech.recognition.RuleParse;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,7 +49,20 @@ public class SDS {
 	private Recognizer recognizer;
 	private JSGFGrammar grammarManager;		
 	
-	private Map<String, Question[]> categories;	
+	private Map<String, List<Question>> bank;	
+	
+	// Provides a mapping from full names of numbers to the numbers themselves
+	private Map<String, Integer> pointsMap = fillPoints();	
+	private Map<String, Integer> fillPoints () {
+		Map<String, Integer> pointsMap = new HashMap<String, Integer>();
+		pointsMap.put("ten", 10);
+		pointsMap.put("twenty", 20);
+		pointsMap.put("thirty-five", 35);
+		pointsMap.put("thirtyfive", 35);
+		pointsMap.put("thirty five", 35);
+		pointsMap.put("sixty", 60);		
+		return pointsMap; 
+	}
 	
     public static void main(String[] args) throws IOException, JSGFGrammarParseException, JSGFGrammarException, GrammarException {
         ConfigurationManager cm;
@@ -73,35 +90,66 @@ public class SDS {
         }
 
         System.out.println("Welcome to Sphinx4 Jeopardy!");
-        System.out.println("============================\n");
-        sds.drawGameBoard();        
+        System.out.println("============================\n");        
 
+        sds.loadGameBoard();
+                
         int score = 0;
-        List<String> categories = new ArrayList<String>();
-        List<String> points = new ArrayList<String>();
+        String[] categories = sds.bank.keySet().toArray(new String[sds.bank.size()]);
+        int nCategories = categories.length;
+//        List<String> points = new ArrayList<String>();
         // loop the recognition until the user says "quit"
         while (true) {
-        	// Update the grammar
-//        	System.out.println("Updating the grammar...");
-        	sds.loadAndRecognize("gameboard");            
-       
             // Start speaking and recognize input speech
+        	sds.loadGrammar("gameboard");
         	System.out.println("Choose a command: [new game | quit] [<category> <points>]");
             Result result = sds.recognizer.recognize();
 
             if (result != null) {            	
-                String resultText = result.getBestFinalResultNoFiller();                
-                
-                // If user says Quit, exit game
-                if (resultText.equalsIgnoreCase("quit")) {
-                	System.out.println("Bye now!");                	
-                	sds.recognizer.deallocate();
-                	System.exit(1);
-                }
-                
-//                if (resultText.equalsIgnoreCase())
-                
-                System.out.println("You said: " + resultText + '\n');
+                String resultText = result.getBestFinalResultNoFiller();                                
+                if (resultText.length() > 0)
+                {
+                    // If user says Quit, exit game
+                    if (resultText.equalsIgnoreCase("quit")) {
+                    	System.out.println("Bye now!");                	
+                    	sds.recognizer.deallocate();
+                    	System.exit(1);
+                    }                          
+                    else if (resultText.equalsIgnoreCase("new game")) {
+                        System.out.println("You said: " + resultText + '\n');
+                    }
+                    else {
+                        // Parse the result text into meaningful tokens
+                    	try {
+	                        String[] tokens = resultText.split(" ");
+	                        String category = tokens[0], points = tokens[1];
+	                         
+	    	                for (int c = 0; c < nCategories; c++) {
+	    	            	    if (category.equalsIgnoreCase(categories[c])) {         
+	    	            	    	category = categories[c];
+	    	            	 	    // Get the list of questions for the chosen category
+	    	            		    Question[] questions = sds.bank.get(category).toArray(new Question[sds.bank.get(category).size()]);                		   
+	    	            		   
+	     	            		    // Find the specific question worth the chosen points value
+	    	            		    int nQuestions = questions.length;
+	    	            		    for (int q = 0; q < nQuestions; q++) {
+	    	            			    if (questions[q].points == sds.pointsMap.get(points)) { // convert number full name to number value
+	    	            				    System.out.println("You picked " + category + " for " + sds.pointsMap.get(points) + " points...\n");              
+	    	            				    // Switch to the grammar of the question
+	    	            				    sds.loadGrammar(category.toLowerCase() + "-" + "question" + q);
+	    	            			    }                			   
+	    	            			   
+	    	            		    }
+	    	            		   
+	    	            		                   		 
+	    	            		   
+	    	            	    }
+	    	                }
+                    	} catch (Exception e) {
+                    		e.printStackTrace();
+                    	}
+                    }
+                }               
             } else {
                 System.out.println("I can't hear what you said.\n");
             }
@@ -116,7 +164,7 @@ public class SDS {
      * @throws IOException if an I/O error occurs
      * @throws GrammarException if a grammar format error is detected
      */
-    private void loadAndRecognize(String grammarName) throws GrammarException {
+    private void loadGrammar(String grammarName) throws GrammarException {
         try {
             grammarManager.loadJSGF(grammarName);
         } catch (JSGFGrammarException e) {
@@ -145,15 +193,32 @@ public class SDS {
         System.out.println("Possible commands: \n");
         grammarManager.dumpRandomSentences(200);
         System.out.println(" ============================");
-//        System.out.println("Start speaking. Say Quit to quit.\n");
     }
     
     private void drawGameBoard () {
-    	System.out.println("Gameboard");
-        System.out.println("=========");
-        System.out.println("Categories: Course, ASR");
-        System.out.println("Points:     10, 20, 35, 60");
-        System.out.println("=========\n");
+    	StringBuilder output = new StringBuilder();
+    	output.append("Gameboard:\n");
+        output.append("=========\n");
+        output.append("Categories: ");
+        String[] categories = bank.keySet().toArray(new String[bank.size()]);
+        int nCategories = categories.length;
+        for (int c = 0; c < nCategories; c++) {
+        	output.append(categories[c]);
+        	if (c != nCategories - 1)
+        		output.append(", ");
+        }
+        output.append("\n");
+        output.append("Points:     ");
+        Question[] questions = bank.get(categories[0]).toArray(new Question[bank.get(categories[0]).size()]);        
+        int nQuestions = questions.length;
+        for (int q = 0; q < nQuestions; q++) {
+        	output.append(questions[q].points);        	
+        	if (q != nQuestions - 1)
+        		output.append(", ");
+        }
+        output.append("\n");
+        output.append("=========\n");
+        System.out.println(output.toString());
     }
     
     // Initialize gameboard values
@@ -166,22 +231,65 @@ public class SDS {
 			while ((line = br.readLine()) != null) {
 				output.append(line);
 			}
-			br.close();
+			br.close();			
 			String gameProperties = output.toString();
 			
+			// Populate the game question bank
+			this.bank = new HashMap<String, List<Question>>();			
 			try {								
-				JSONObject bank = new JSONObject(gameProperties);				
-				JSONArray categories = bank.getJSONArray("categories");
+				JSONObject jsonInit = new JSONObject(gameProperties);				
+				JSONObject bank = jsonInit.getJSONObject("bank");
+				
+				// Get all categories
+				JSONArray categories = bank.getJSONArray("categories");				
+				int nCategories = categories.length();			
+				for (int c = 0; c < nCategories; c++) {
+					JSONObject category = categories.getJSONObject(c);
+					String name = category.getString("name");
+					
+					// Get all questions within this category
+					List<Question> questionsList = new ArrayList<Question>();					
+					JSONArray questions = category.getJSONArray("questions");					
+					int nQuestions = questions.length();				
+					for (int q = 0; q < nQuestions; q++) {
+						JSONObject question = questions.getJSONObject(q);
+						String answer = question.getString("answer");
+						questionsList.add(new Question(question.getString("question"), question.getString("answer"), question.getInt("points")));
+						
+						// Create question bank grammar file
+						createQuestionGrammarFile(name + "-" + "Question" + (q + 1), answer);
+					}
+					// Put the category into the game question bank
+					this.bank.put(name, questionsList);
+				}								
 				
 			} catch (JSONException e) {
 				e.printStackTrace();
-			}
-			
+			}		
 			
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	
+    	this.drawGameBoard();       
+    }        
+    
+    private void createQuestionGrammarFile (String grammarName, String answer) {    	
+		StringBuilder output = new StringBuilder();
+		// Header
+		output.append("#JSGF V1.0;\n\n/**\n * JSGF Grammar for Jeopardy: " + grammarName.replace("-", "/") + "\n */\n\n");
+		output.append("grammar " + grammarName.toLowerCase().replace(" ", "") + ";\n\n");
+		// Body
+		output.append("public <answer> = " + answer + " {ANSWER};");
+			
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(new File("src/sds/grammars/" + grammarName.toLowerCase() + ".gram")));
+			bw.write(output.toString());
+			bw.flush();
+			bw.close();
+		} catch (IOException e) { 
 			e.printStackTrace();
 		}
     }
@@ -190,5 +298,11 @@ public class SDS {
     	String question;
     	String answer;
     	int points;
+    	
+    	public Question (String question, String answer, int points) {
+    		this.question = question;
+    		this.answer = answer;
+    		this.points = points;
+    	}
     }
 }

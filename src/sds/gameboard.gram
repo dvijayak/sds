@@ -1,12 +1,13 @@
 #JSGF V1.0;
 
 /**
- * JSGF Grammar for Jeopardy: Main Menu
+ * JSGF Grammar for Jeopardy: Gameboard
  */
 
 grammar gameboard;
 
-public <command> = [ new game | quit {exit} ] (<category> <points>)*;
+public <command> = [ <game> {GAME} ] [<category> {CATEGORY} <points> {POINTS}];
+<game> = new game {NEW} | quit {EXIT};
 <points> = ten {10} | twenty {20} | thirty-five {35} | sixty {60};
 <category> = course | ASR;  
 
