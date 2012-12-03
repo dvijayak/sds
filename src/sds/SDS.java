@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.speech.recognition.GrammarException;
-import javax.speech.recognition.RuleParse;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,15 +40,17 @@ import edu.cmu.sphinx.util.props.ConfigurationManager;
 
 
 /**
- * A Spoken Dialogue System built using Sphinx-4. This application uses the Sphinx-4
- * endpointer, which automatically segments incoming audio into utterances and silences.
+ * A Sphinx4 version of the popular Jeopardy game. This applications is a Spoken 
+ * Dialogue System and uses the Sphinx-4 endpointer, which automatically 
+ * segments incoming audio into utterances and silences.
  */
 public class SDS {
 
 	private Recognizer recognizer;
 	private JSGFGrammar grammarManager;		
 	
-	private Map<String, List<Question>> bank;	
+	private Map<String, List<Question>> bank;
+	private int score = 0;
 	
 	// Provides a mapping from full names of numbers to the numbers themselves
 	private Map<String, Integer> pointsMap = fillPoints();	
@@ -91,25 +92,23 @@ public class SDS {
 
         System.out.println("Welcome to Sphinx4 Jeopardy!");
         System.out.println("============================\n");        
-
-        sds.loadGameBoard();
+        sds.showInstructions();
                 
-        int score = 0;
+        sds.loadGameBoard();
+                                        
         String[] categories = sds.bank.keySet().toArray(new String[sds.bank.size()]);
         int nCategories = categories.length;
-//        List<String> points = new ArrayList<String>();
-        // loop the recognition until the user says "quit"
+                
         while (true) {
             // Start speaking and recognize input speech
-        	sds.loadGrammar("gameboard");
-        	System.out.println("Choose a command: [new game | quit] [<category> <points>]");
+        	sds.loadGrammar("gameboard");        	
             Result result = sds.recognizer.recognize();
 
             if (result != null) {            	
                 String resultText = result.getBestFinalResultNoFiller();                                
                 if (resultText.length() > 0)
                 {
-                    // If user says Quit, exit game
+                    // If user says Quit (or Bye), exit game
                     if (resultText.equalsIgnoreCase("quit")) {
                     	System.out.println("Bye now!");                	
                     	sds.recognizer.deallocate();
@@ -118,6 +117,8 @@ public class SDS {
                     else if (resultText.equalsIgnoreCase("new game")) {
                         System.out.println("You said: " + resultText + '\n');
                     }
+                    else if (resultText.equalsIgnoreCase("help"))
+                    	sds.showInstructions();
                     else {
                         // Parse the result text into meaningful tokens
                     	try {
@@ -134,35 +135,46 @@ public class SDS {
 	    	            		    int nQuestions = questions.length;
 	    	            		    for (int q = 0; q < nQuestions; q++) {
 	    	            			    if (questions[q].points == sds.pointsMap.get(points)) { // convert number full name to number value
-	    	            				    System.out.println("You picked " + category + " for " + sds.pointsMap.get(points) + " points...\n");              
-	    	            				    // Switch to the grammar of the question
-	    	            				    sds.loadGrammar(category.toLowerCase() + "-" + "question" + q);
+	    	            				    System.out.println("You picked " + category + " for " + sds.pointsMap.get(points) + " points...\n");
 	    	            				    
-	    	            				    System.out.println("Question: " + questions[q].question + "\n");
+	    	            				    // Switch to the grammar of the question
+	    	            				    sds.loadGrammar(category.toLowerCase() + "-" + "question" + (q + 1)); // filenames start from 1; not 0
+	    	            				    
+	    	            				    // Display the question and retrieve/process the response
+	    	            				    System.out.println("Question: " + questions[q].question);
 	    	            				    Result answer = sds.recognizer.recognize();
 	    	            				    if (answer != null) {
 	    	            				    	String answerText = answer.getBestResultNoFiller();
-	    	            				    	System.out.println("You answered: " + answerText + "\n.........");	    	            				    	
-	    	            				    	if (answerText.equalsIgnoreCase(questions[q].answer))
-	    	            				    		System.out.println("Correct!");
+	    	            				    	System.out.print("You answered: " + answerText + ".........");	    	            				    	
+	    	            				    	if (answerText.equalsIgnoreCase(questions[q].answer)) {
+	    	            				    		System.out.println("Correct! +" + questions[q].points + " :)\n");
+	    	            				    		sds.score += questions[q].points;
+	    	            				    	}
+	    	            				    	else {
+	    	            				    		System.out.println("Wrong! Sorry -" + questions[q].points + " :(\n");
+	    	            				    		sds.score -= questions[q].points;
+	    	            				    	}
+	    	            				    	// Remove the question from the bank so the player can not try it again
+	    	            				    	sds.bank.get(category).remove(q);
+	    	            				    	// Recreate the grammar file structure according to the modified question bank
+	    	            				    	sds.removeQuestionGrammarFiles();
+	    	            				    	sds.createQuestionGrammarFiles();
 	    	            				    } else {
 	    	            		                System.out.println("I can't hear what you said.\n");
-	    	            		            }	    	            				    
-	    	            			    }                			   
-	    	            			   
+	    	            		            }
+	    	            				    
+	    	            				    break;
+	    	            			    }	    	            			   
 	    	            		    }
-	    	            		   
-	    	            		                   		 
 	    	            		   
 	    	            	    }
 	    	                }
                     	} catch (Exception e) {
                     		e.printStackTrace();
                     	}
+                    	sds.drawGameBoard();
                     }
-                }   
-                
-                sds.drawGameBoard();
+                }                                   
             } else {
                 System.out.println("I can't hear what you said.\n");
             }
@@ -186,59 +198,64 @@ public class SDS {
             throw new GrammarException (e.getMessage());
         } catch (IOException e) {
         	e.printStackTrace();
-        }
-        
-//        dumpSampleSentences(grammarName);
+        }        
     }
-
-
 
     /**
-     * Dumps out a set of sample sentences for this grammar.  
-     *  TODO: Note the current
-     *  implementation just generates a large set of random utterances
-     *  and tosses away any duplicates. There's no guarantee that this
-     *  will generate all of the possible utterances. (yep, this is a hack)
-     *
-     */
-    private void dumpSampleSentences(String title) {
-        System.out.println(" ====== " + title + " ======");
-        System.out.println("Possible commands: \n");
-        grammarManager.dumpRandomSentences(200);
-        System.out.println(" ============================");
+     * Display game instructions/help to the player
+     * 
+     * @author dvijayak
+     */    
+    private void showInstructions () {
+    	System.out.println("Instructions:\nChoose a command: [new game | help | quit] [<category> <points>]\n");
     }
     
+    /**
+     * Display the current status of the game (gameboard)
+     * 
+     * @author dvijayak
+     */
     private void drawGameBoard () {
     	StringBuilder output = new StringBuilder();
     	output.append("Gameboard:\n");
         output.append("=========\n");
-        output.append("Categories: ");
         String[] categories = bank.keySet().toArray(new String[bank.size()]);
         int nCategories = categories.length;
         for (int c = 0; c < nCategories; c++) {
-        	output.append(categories[c]);
-        	if (c != nCategories - 1)
-        		output.append(", ");
-        }
-        output.append("\n");
-        output.append("Points:     ");
-        Question[] questions = bank.get(categories[0]).toArray(new Question[bank.get(categories[0]).size()]);        
-        int nQuestions = questions.length;
-        for (int q = 0; q < nQuestions; q++) {
-        	output.append(questions[q].points);        	
-        	if (q != nQuestions - 1)
-        		output.append(", ");
-        }
-        output.append("\n");
+        	output.append("Category: " + categories[c] + "\n");        	
+        	output.append("Points:   ");
+        	Question[] questions = bank.get(categories[c]).toArray(new Question[bank.get(categories[c]).size()]);        
+            int nQuestions = questions.length;
+            for (int q = 0; q < nQuestions; q++) {
+            	output.append(questions[q].points);        	
+            	if (q != nQuestions - 1)
+            		output.append(", ");
+            }
+            output.append("\n\n");            
+        }                      
+        output.append("Score: " + score + "\n");
         output.append("=========\n");
         System.out.println(output.toString());
     }
     
-    // Initialize gameboard values
+    /**
+     *  Initialize the game values
+     *  
+     *  @author dvijayak
+     */
     private void loadGameBoard () {
-    	try {    		    	
-			BufferedReader br = new BufferedReader(new FileReader(new File("src/sds/game.json")));
-			
+    	System.out.println("Loading gameboard...");
+    	try {    		 
+//    		// Clear all grammar files from previous session
+//    		removeQuestionGrammarFiles();
+    		
+    		// Initialize the score(s)
+    		this.score = 0;
+    		
+    		/* Create the question bank and initialize the game resources */
+    		
+    		// Read the JSON file
+			BufferedReader br = new BufferedReader(new FileReader(new File("src/sds/game.json")));			
 			StringBuilder output = new StringBuilder();
 			String line = null;			
 			while ((line = br.readLine()) != null) {
@@ -288,7 +305,16 @@ public class SDS {
     	
     	this.drawGameBoard();       
     }        
-    
+       
+    /**
+     * Create a grammar file for the question (whose answer is provided)
+     * using the provided filename.
+     * 
+     * @param grammarName
+     * @param answer
+     * 
+     * @author dvijayak
+     */
     private void createQuestionGrammarFile (String grammarName, String answer) {    	
 		StringBuilder output = new StringBuilder();
 		// Header
@@ -307,6 +333,52 @@ public class SDS {
 		}
     }
     
+    /**
+     * [Re]Create a list of grammar files that are currently
+     * in the question bank
+     * 
+     * @author dvijayak
+     */
+    private void createQuestionGrammarFiles () {
+		// Get all categories
+    	String[] categories = bank.keySet().toArray(new String[bank.size()]);				
+		int nCategories = categories.length;			
+		for (int c = 0; c < nCategories; c++) {    	    
+	 	    // Get all questions for each category
+		    Question[] questions = bank.get(categories[c]).toArray(new Question[bank.get(categories[c]).size()]);                		   		 
+		    int nQuestions = questions.length;
+		    for (int q = 0; q < nQuestions; q++) {
+		    	createQuestionGrammarFile(categories[c] + "-" + "Question" + (q + 1), questions[q].answer);
+		    }
+    		       	    
+        }
+    }    
+    
+    /**
+     * Remove all question grammar files
+     * 
+     * @author dvijayak
+     */
+    private void removeQuestionGrammarFiles () {
+    	File folder = new File("src/sds/grammars/");
+    	File[] files = folder.listFiles();
+    	if (files != null) { // some JVMs return null for empty directories
+    		for (File f: files) {
+    			String fileName = f.getName();
+    			// Delete all grammar files except for gameboard.gram [and sds.gram]
+    			if (fileName.endsWith(".gram") && !fileName.equalsIgnoreCase("gameboard.gram") && !fileName.equalsIgnoreCase("sds.gram")) {
+    				f.delete();
+    			}    			
+    		}
+    	}
+    		
+    }
+    
+    /**
+     * Inner class for the representation of a question
+     * 
+     * @author dvijayak     
+     */    
     class Question {
     	String question;
     	String answer;
